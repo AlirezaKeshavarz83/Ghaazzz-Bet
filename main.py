@@ -139,6 +139,10 @@ def handle_key(update, context):
             return
     except:
         return
+    if st[user_id] == 0:
+        return
+    if len(st[user_id]) != 0:
+        return
     x = int(query.data[4:])
     bot = context.bot
     bot.edit_message_text(

@@ -8,13 +8,13 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-token = "1635730125:AAHUrL_TaPYlEwJW9IfinEPa94Bf9F34LDI" #os.getenv("token") #1635730125:AAHUrL_TaPYlEwJW9IfinEPa94Bf9F34LDI
+token = os.getenv("token")
 
 updater = Updater(token, use_context=True)
 
 st = {}
 bet_message = {}
-games = [["Real Madrid", "Chelsea", {}], ["PSG", "Man City", {}]]
+games = [["PSG", "Man City", {}], ["Barcelona", "Granada", {}]]
 
 admins = [1203400559]
 
@@ -164,6 +164,8 @@ def add_admin(update, context):
     if not user_id in admins:
         return
     admins += [context.args[0]]
+#def add_game(update, context):
+
 
 def prnt(update, context):
     user_id = update.message.chat.id

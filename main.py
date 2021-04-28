@@ -1,9 +1,15 @@
 import logging
 
+import os
+
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
+
+token = os.getenv("token")
+
+updater = Updater(token, use_context=True)
 
 st = {}
 games = [["Real Madrid", "Chelsea", {}], ["PSG", "Man City", {}]]
@@ -137,7 +143,7 @@ def prnt(update, context):
     update.message.reply_text(msg, parse_mode="HTML")
 
 
-updater = Updater("1635730125:AAHUrL_TaPYlEwJW9IfinEPa94Bf9F34LDI", use_context=True)
+
 
 dp = updater.dispatcher
 

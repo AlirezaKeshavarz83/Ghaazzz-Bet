@@ -14,7 +14,7 @@ updater = Updater(token, use_context=True)
 
 st = {}
 bet_message = {}
-games = [["PSG", "Man City", {}], ["Barcelona", "Granada", {}]]
+games = [["Esteghlal", "Al Shorta", {}]]
 
 admins = [1203400559]
 

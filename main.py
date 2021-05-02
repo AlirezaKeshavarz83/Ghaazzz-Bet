@@ -21,7 +21,7 @@ class Game:
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-token = "1635730125:AAHUrL_TaPYlEwJW9IfinEPa94Bf9F34LDI" #os.getenv("token")
+token = os.getenv("token")
 
 updater = Updater(token, use_context=True)
 
@@ -202,7 +202,7 @@ def add_admin(update, context):
 
     if not user_id in admins:
         return
-    admins += [context.args[0]]
+    admins += [int(context.args[0])]
 def add_game(update, context):
     user_id = update.message.chat.id
     global admins
@@ -257,7 +257,7 @@ dp.add_handler(CommandHandler("add_admin", add_admin))
 dp.add_handler(CommandHandler("add_game", add_game))
 dp.add_handler(CommandHandler("remove_game", remove_game))
 dp.add_handler(CommandHandler("print", prnt))
-dp.add_handler(MessageHandler(Filters.all & ~Filters.command, handle))
+dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle))
 dp.add_handler(CallbackQueryHandler(handle_key, pattern = "^bet"))
 
 

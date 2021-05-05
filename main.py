@@ -31,32 +31,26 @@ games = []
 user_bet = {}
 add_teams = []
 
-admins = [1203400559]
+admins = list(map(int, os.getenv("admins").split(":")))
+
+def add_user(user_id):
+    try:
+        st[user_id]
+        return 0
+    except:
+        st[user_id] = "main"
+        return 1
 
 def start(update, context):
     user_id = update.message.chat.id
-    f = 0
-    try:
-        st[user_id]
-        f = 1
-    except:
-        f = 0
-    if f == 0:
+    if add_user(user_id):
         update.message.reply_text("salam")
     else:
         update.message.reply_text("salami dobare")
     st[user_id] = "main"
 def bet(update, context):
     user_id = update.message.chat.id
-    f = 0
-    try:
-        st[user_id]
-        f = 1
-    except:
-        f = 0
-    if f == 0:
-        update.message.reply_text("ابتدا از دستور /start استفاده کنید.")
-        return
+    add_user(user_id)
     if st[user_id] != "main":
         update.message.reply_text("شما در استیت درست قرار ندارید.")
         return
@@ -76,28 +70,14 @@ def bet(update, context):
     st[user_id] = "bet0"
 def cancel(update, context):
     user_id = update.message.chat.id
-    f = 0
-    try:
-        st[user_id]
-        f = 1
-    except:
-        f = 0
-    if f == 0:
-        update.message.reply_text("ابتدا از دستور /start استفاده کنید.")
-        return
+    add_user(user_id)
+
     update.message.reply_text("شما در استیت مین قرار دارید.")
     st[user_id] = "main"
 def handle(update, context):
     user_id = update.message.chat.id
-    f = 0
-    try:
-        st[user_id]
-        f = 1
-    except:
-        f = 0
-    if f == 0:
-        update.message.reply_text("ابتدا از دستور /start استفاده کنید.")
-        return
+    add_user(user_id)
+
     if st[user_id] == "main":
         return
     if st[user_id] == "bet0":
@@ -136,20 +116,15 @@ def handle(update, context):
             return
         user_bet[user_id].second_score = x
         st[user_id] = "bet3"
-        update.message.reply_text("فکت : ")
+        update.message.reply_text("فکت : ", reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text = "Skip", callback_data = "skip_fact")]]))
         return
     if st[user_id] == "bet3":
         msg = update.message.text
         user_bet[user_id].facts = msg
         user_bet[user_id].time = update.message.date
-        try:
-            user_bet[user_id].game.bets[user_id]
-            update.message.reply_text("شما قبلا پیش بینی کرده اید.")
-            st[user_id] = "main"
-        except:
-            user_bet[user_id].game.bets[user_id] = user_bet[user_id]
-            update.message.reply_text("پیش بینی شما ذخیره شد.")
-            st[user_id] = "main"
+        user_bet[user_id].game.bets[user_id] = user_bet[user_id]
+        update.message.reply_text("پیش بینی شما ذخیره شد.")
+        st[user_id] = "main"
         return
     if st[user_id] == "add0":
         name = update.message.text
@@ -166,8 +141,9 @@ def handle(update, context):
         st[user_id] = "main"
         return
 
-def handle_key(update, context):
+def handle_bet_key(update, context):
     user_id = update.callback_query.from_user.id
+    add_user(user_id)
     query = update.callback_query
     try:
         if(query.message.message_id != bet_message[user_id].message_id):
@@ -196,13 +172,37 @@ def handle_key(update, context):
     except:
         bet_message[user_id].reply_text("تعداد گل " + user_bet[user_id].game.first_team.name + " : ")
 
+def handle_skip_key(update, context):
+    user_id = update.callback_query.from_user.id
+    add_user(user_id)
+    query = update.callback_query
+    bot = context.bot
+    if query.data == "skip_fact":
+        if(st[user_id] != "bet3"):
+            return
+        msg = ""
+        user_bet[user_id].facts = msg
+        user_bet[user_id].time = query.message.date
+        user_bet[user_id].game.bets[user_id] = user_bet[user_id]
+        bot.send_message(
+            chat_id = query.message.chat_id,
+            text = "پیش بینی شما ذخیره شد."
+        )
+        bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text = "فکت: "
+        )
+        st[user_id] = "main"
+        return
+
 def add_admin(update, context):
     user_id = update.message.chat.id
     global admins
 
     if not user_id in admins:
         return
-    admins += [int(context.args[0])]
+    admins += [context.args[0]]
 def add_game(update, context):
     user_id = update.message.chat.id
     global admins
@@ -235,7 +235,7 @@ def prnt(update, context):
             msg += str(bt.time) + "\n"
             update.message.reply_text(msg, parse_mode="HTML")
         return
-    msg = ""
+    msg = "Bets\n"
     for i in range(len(games)):
         msg += str(i) + ": " + games[i].first_team.name + " - " + games[i].second_team.name + "\n"
         j = 0
@@ -257,8 +257,9 @@ dp.add_handler(CommandHandler("add_admin", add_admin))
 dp.add_handler(CommandHandler("add_game", add_game))
 dp.add_handler(CommandHandler("remove_game", remove_game))
 dp.add_handler(CommandHandler("print", prnt))
-dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle))
-dp.add_handler(CallbackQueryHandler(handle_key, pattern = "^bet"))
+dp.add_handler(MessageHandler(Filters.all & ~Filters.command, handle))
+dp.add_handler(CallbackQueryHandler(handle_bet_key, pattern = "^bet"))
+dp.add_handler(CallbackQueryHandler(handle_skip_key, pattern = "^skip"))
 
 
 updater.start_polling()

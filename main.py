@@ -13,9 +13,10 @@ class Bet:
         self.user = user
         self.game = game
 class Game:
-    def __init__(self, first_team, second_team):
+    def __init__(self, first_team, second_team, time):
         self.first_team = first_team
         self.second_team = second_team
+        self.time = time
         self.bets = {}
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -48,6 +49,22 @@ def start(update, context):
     else:
         update.message.reply_text("salami dobare")
     st[user_id] = "main"
+
+def matches(update, context):
+    user_id = update.message.chat.id
+    add_user(user_id)
+    if st[user_id] != "main":
+        update.message.reply_text("شما در استیت درست قرار ندارید.")
+        return
+    if len(games) == 0:
+        update.message.reply_text("در حال حاضر بازی ای برای شرط بندی وجود ندارد.")
+        return
+    msg = ""
+    for game in games:
+        msg += game.first_team.name + ' - ' + game.second_team.name + '\n' + "شروع بازی: " + game.time + "\n\n"
+    update.message.reply_text(msg, parse_mode = "HTML")
+    return
+
 def bet(update, context):
     user_id = update.message.chat.id
     add_user(user_id)
@@ -80,7 +97,7 @@ def handle(update, context):
 
     if st[user_id] == "main":
         return
-    if st[user_id] == "bet0":
+    '''if st[user_id] == "bet0":
         msg = update.message.text
         try:
             x = int(msg)
@@ -97,7 +114,7 @@ def handle(update, context):
             st[user_id] = "main"
         except:
             update.message.reply_text("تعداد گل " + user_bet[user_id].game.first_team.name + " : ")
-        return
+        return'''
     if st[user_id] == "bet1":
         msg = update.message.text
         try:
@@ -135,7 +152,12 @@ def handle(update, context):
     if st[user_id] == "add1":
         name = update.message.text
         add_teams.append(Team(name))
-        games.append(Game(add_teams[0], add_teams[1]))
+        update.message.reply_text("Time")
+        st[user_id] = "add2"
+        return
+    if st[user_id] == "add2":
+        time = update.message.text
+        games.append(Game(add_teams[0], add_teams[1], time))
         update.message.reply_text("بازی افزوده شد.")
         add_teams.clear()
         st[user_id] = "main"
@@ -159,7 +181,7 @@ def handle_bet_key(update, context):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text = games[x].first_team.name + ' - ' + games[x].second_team.name
+        text = games[x].first_team.name + ' - ' + games[x].second_team.name + '\n' + "شروع بازی: " + games[x].time
     )
     user_bet[user_id] = Bet(update.callback_query.from_user, games[x])
     st[user_id] = "bet1"
@@ -251,6 +273,7 @@ def prnt(update, context):
 dp = updater.dispatcher
 
 dp.add_handler(CommandHandler("start", start))
+dp.add_handler(CommandHandler("matches", matches))
 dp.add_handler(CommandHandler("bet", bet))
 dp.add_handler(CommandHandler("cancel", cancel))
 dp.add_handler(CommandHandler("add_admin", add_admin))
